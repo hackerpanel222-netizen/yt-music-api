@@ -1,0 +1,8 @@
+{
+  "name": "yt-music-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "youtube-sr": "^4.3.11",
+    "@distube/ytdl-core": "^4.16.12"
+  }
+}
