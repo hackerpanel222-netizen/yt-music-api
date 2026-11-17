@@ -1,5 +1,11 @@
 const YouTube = require("youtube-sr").default;
 
+const COBALT_INSTANCES = [
+  "https://cobalt-api.kwiatekmiki.com/",
+  "https://cobalt.api.timelessnesses.me/",
+  "https://api.cobalt.best/"
+];
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -20,25 +26,34 @@ module.exports = async (req, res) => {
     }
 
     if (id) {
-      // Cobalt API se bot-check bypass karke direct audio stream lo
-      const response = await fetch("https://api.cobalt.tools/", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          url: `https://www.youtube.com/watch?v=${id}`,
-          downloadMode: "audio",
-          audioFormat: "mp3"
-        })
-      });
+      const ytUrl = `https://www.youtube.com/watch?v=${id}`;
 
-      const data = await response.json();
-      if (data.url) {
-        return res.status(200).json({ url: data.url });
+      for (const endpoint of COBALT_INSTANCES) {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              url: ytUrl,
+              downloadMode: "audio",
+              audioFormat: "mp3"
+            })
+          });
+
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (data.url) {
+            return res.status(200).json({ url: data.url });
+          }
+        } catch (e) {
+          continue;
+        }
       }
-      return res.status(500).json({ error: data.error?.code || "Cobalt stream failed" });
+
+      return res.status(500).json({ error: "All audio instances busy, try again" });
     }
 
     return res.status(400).json({ error: "Pass ?q=songname or ?id=videoid" });
